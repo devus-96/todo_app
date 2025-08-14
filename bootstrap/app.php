@@ -21,6 +21,18 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // Activer la protection CSRF (activée par défaut)
+        $middleware->web([
+            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+        ]);
+
+        // Exempter certaines routes (si nécessaire)
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+            'api/webhook',
+            // Ajoutez vos routes exemptées ici
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

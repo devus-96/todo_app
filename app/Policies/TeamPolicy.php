@@ -40,12 +40,31 @@ class TeamPolicy
             $role_team = $team->roles()->where('user_id', $user->id)->first();
             $role_company = $company->roles()->where('user_id', $user->id)->first();
             
-            // Vérifie les permissions (comme dans l'exemple précédent)
+            // Vérifie les permissions
             return ($role_team && $role_team->role_name) ||
                    ($role_company && in_array($role_company->role_name, ['owner', 'manager']));
         }
 
         return false;
+    }
+
+    public function view_project_task (User $user, Projects $project, Teams $team, Companies $company): bool
+    {
+        $role_team = $team->roles()->where('user_id', $user->id)->first();
+        $role_project = $project->roles()->where('user_id', $user->id)->first();
+        $role_company = $company->roles()->where('user_id', $user->id)->first();
+
+        return ($role_project && $role_project->role_name) || 
+                ($role_team && $role_team->role_name === 'administrator')
+                ($role_company && in_array($role_company->role_name, ['owner', 'manager']));
+    }
+
+    public function create_project_task (User $user, Projects $project, Teams $team) {
+        $role_project = $project->roles()->where('user_id', $user->id)->first();
+        $role_team = $team->roles()->where('user_id', $user->id)->first();
+
+        return ($role_project && $role_project->role_name === 'chief-project') ||
+                ($role_team && $role_team->role_name === 'administrator' );
     }
 
     /**

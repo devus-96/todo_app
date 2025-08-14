@@ -17,25 +17,41 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TaskController extends Controller
 {
+
     public function show ($id, $teamId=null, $projectId=null, $task_id) {
-      $user = Auth::user();
+      try {
+        $team = Teams::findOrFail($teamId);
+        $company = Companies::findOrFail($id);
+      }  catch (ModelNotFoundException $e) {
+        return response()->json(['message' => 'Bad resquest'], 403);
+      }
+      //1.CAS ou les tasks sont relie a une teams 
       if ($teamId && $projectId=null) {
+        Gate::authorize('views-tasks', [$team, $company]);
+
+        $task = $team->tasks()->where('id', $task_id)->get();
+        $subtasks = $task->subtasks()->get();
+
+        return Inertia('company/taskDetails', [
+          'task' => $task,
+          'subtasks' => $subtasks
+      ]);
+      //2.CAS 2: ce sont des tasks contenues dans un projet
+      } else if ($teamId & $projectId) {
         try {
-          $team = Teams::findOrFail($teamId);
-          $company = Companies::findOrFail($id);
-        }  catch (ModelNotFoundException $e) {
+          $project = Projects::findOrFail($projectId);
+        } catch (ModelNotFoundException $e) {
           return response()->json(['message' => 'Bad resquest'], 403);
         }
+        Gate::authorize('view-tasks-project', [$project, $team, $company]);
 
-        $role_team = $team->roles()->where('user_id', '=', $user->id)->first();
-        $role_company = $company->roles()->where('user_id', '=', $user->id)->first();
-        //si il n'a pas de role associe a la team on verifie si il est un manager ou le propretaire de la company
-        //si non on retourne une erreur 403
-        if (!$role_team->role_name && $role_company->role_name !== 'owner' && $role_company->role_name !== 'manager') {
-          return response()->json(['message' => "You do not have permission to get these tasks"], 403);
-        }
-      } else if ($teamId & $projectId) {
+        $task = $project->tasks()->where('id', $task_id)->get();
+        $subtasks = $task->subtasks()->get();
 
+        return Inertia('company/taskDetails', [
+          'task' => $task,
+          'subtasks' => $subtasks
+        ]);
       }
     }
 
@@ -86,26 +102,47 @@ class TaskController extends Controller
 
       if ($projectId && !$teamId) {
         try {
-          $project = Projects::findOrFail($request->input('project_id'));
+          $project = Projects::findOrFail($projectId);
         } catch (ModelNotFoundException $e) {
-          return response()->json(['message' => 'task not found.'], 404);
+          return response()->json(['message' => 'project not found.'], 404);
         }
+
+        if ($project->author !== $user->id) {
+          return response()->json(['message' => 'It seems you do not have the rights to perform this action.'], 403);
+        }
+
         $project->tasks()->create([
             ...$taskData,
             'author' => $user->id,
         ]);
       } else if ($projectId && $teamId) {
+        try {
+          $team = Teams::findOrFail($teamId);
+          $project = Projects::findOrFail($projectId);
+        } catch (ModelNotFoundException $e) {
+          return response()->json(['message' => 'Bad request.'], 403);
+        }
 
+        Gate::authorize('create-tasks-project', [$project, $team]);
+
+        $project->tasks()->create([
+          ...$taskData,
+          'author' => $user->id,
+        ]);
       } else if ($teamId && !$projectId) {
         try {
           $team = Teams::findOrFail($request->input('team_id'));
         } catch (ModelNotFoundException $e) {
           return response()->json(['message' => 'task not found.'], 404);
         }
+        $role_team = $team->roles()->where('user_id', $user->id)->first();
+        if ($role_team !== 'administrator') {
+          return response()->json(['message' => 'It seems you do not have the rights to perform this action.'], 403);
+        }
         $team->tasks()->create([
           ...$taskData,
           'author' => $user->id,
-      ]);
+        ]);
       } else {
           Tasks::create([
             ...$taskData,
@@ -116,7 +153,7 @@ class TaskController extends Controller
       return redirect('/user/tasks');
     }
 
-    public function update (UpdateTaskRequest $request, $id) {
+    public function update (UpdateTaskRequest $request, $id, $teamId, $projectId, $taskId) {
       $taskData = $request->validated();
 
       try {

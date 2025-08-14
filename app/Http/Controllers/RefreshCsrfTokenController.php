@@ -14,8 +14,9 @@ class RefreshCsrfTokenController extends Controller
      */
     public function __invoke(Request $request)
     {
-        $request->session()->regenerateToken();
+        $request->session()->regenerateToken(); // Regénère le token côté session
+        $newToken = csrf_token(); // Récupère le nouveau token
 
-    	return response()->json();
+        return response()->json(['csrf_token' => $newToken]);
     }
 }

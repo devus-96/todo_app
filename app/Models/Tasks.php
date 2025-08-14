@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 
 class Tasks extends Model
@@ -47,5 +48,14 @@ class Tasks extends Model
     public function comments(): MorphMany
     {
         return $this->morphMany(Comments::class, 'commentable');
+    }
+
+    /**
+     * get all tasks substasks
+     */
+
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(Sub_tasks::class);
     }
 }
