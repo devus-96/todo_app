@@ -4,7 +4,7 @@ import { BreadcrumbItem, ProjectType, Todo } from "@/types"
 import AppLayout from "@/layouts/app-layout"
 import { Head, useForm } from "@inertiajs/react"
 import { format } from "date-fns"
-import { TaskUserComponent } from "@/components/user/taskUserComponent"
+import { TaskComponent } from "@/components/common/taskComponent"
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -13,10 +13,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function ProjectDetails ({projectItem, tasksData}:{projectItem: any, tasksData: any}) {
+const dropMenuTab = [
+    {
+        title: 'All',
+        values: ['all']
+    },
+    {
+        title: 'Priority',
+        values: ['High', 'Medium', 'Low']
+    },
+    {
+        title: 'State',
+        values: ["not started",'in progress',"waitting", "paused"]
+    },
+]
+
+export default function ProjectDetails ({
+    projectItem, 
+    tasksData,
+    teamId,
+    projectId,
+    companyId
+}:{
+    projectItem: any, 
+    tasksData: any,
+    teamId?: number,
+    projectId?:number,
+    companyId?:number
+}) {
     const [showObjectif, setShowObjectif] = useState(false)
     const [project, setProject] = useState<ProjectType>(projectItem as ProjectType)
-    const [tasks, setTasks] = useState<Todo[]>(tasksData as Todo[])
     const { data, setData, patch, errors, reset } = useForm<Required<any>>();
 
     useEffect(() => {
@@ -138,11 +164,12 @@ export default function ProjectDetails ({projectItem, tasksData}:{projectItem: a
                 <div className="flex items-center text-3xl text-textprimary space-x-4 px-4 mt-4">
                     <SquareCheck /><p>Tasks</p>
                 </div>
-                <TaskUserComponent 
-                    tasks={tasks} 
-                    setTasks={setTasks} 
-                    type="user_project_task" 
-                    project={projectItem}
+                <TaskComponent 
+                    team_id={teamId} 
+                    project_id={projectId} 
+                    company_id={companyId}
+                    taskData={tasksData}
+                    filter={dropMenuTab}
                 />
             </section>
         </div>

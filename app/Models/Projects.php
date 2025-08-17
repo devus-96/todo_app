@@ -37,6 +37,11 @@ class Projects extends Model
         return $this->morphMany(Role::class, 'roleable');
     }
 
+    public function user(): BelongsTo 
+    {
+        return $this->belongsTo(User::class);
+    }
+
     /**
      * Get all of the project's tasks.
      */

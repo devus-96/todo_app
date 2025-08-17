@@ -1,7 +1,7 @@
 "use client"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import { Menu } from "../custom/menu"; 
-import { DoorOpen, MessageCircleDashed, Trash2 } from "lucide-react"
+import { DoorOpen, MessageCircleDashed, Trash2, X } from "lucide-react"
 import { StatusCombobox } from "../custom/statusCombobox";
 import { PriorityCombobox } from "../custom/priorityCombox";
 import { DateCombox } from "../custom/dateCombox";
@@ -23,14 +23,20 @@ export const TaskTableComponent = ({
     index,
     tasks,
     setSelected,
-    setError
+    setError,
+    company_id,
+    team_id,
+    project_id
 }:{
         item: Todo, 
         setTasks: Dispatch<SetStateAction<Todo[]>>,
         index: number,
         tasks: Todo[],
         setSelected: Dispatch<SetStateAction<number[]>>,
-        setError: Dispatch<SetStateAction<string[]>>
+        setError: Dispatch<SetStateAction<string[]>>,
+        company_id?: number,
+        team_id?: number,
+        project_id?: number,
     }) => {
     //useState
     const { data, setData, patch, errors, reset } = useForm<Required<{[key: string]: string}>>();
@@ -137,11 +143,38 @@ export const TaskTableComponent = ({
     }
 
     useEffect(() => {
-        if (indexes !== null) {
-            patch(route('user.taskUpdate', tasks[indexes].id))
+        if (project_id && !team_id) {
+            if (indexes !== null) {
+                patch(route('company.update_project_task', {
+                    id: company_id, 
+                    projectId: project_id, 
+                    taskId: tasks[indexes].id
+                }))
+            }
+        } else if (!project_id && team_id) {
+            if (indexes !== null) {
+                patch(route('company.update_task_team', {
+                    id: company_id, 
+                    teamId: team_id, 
+                    taskId: tasks[indexes].id
+                }))
+            }
+        } else if (project_id && team_id) {
+            if (indexes !== null) {
+                patch(route('company.update_task_project_team', {
+                    id: company_id, 
+                    teamId: team_id, 
+                    projectId: project_id, 
+                    taskId: tasks[indexes].id
+                }))
+            }
+        } else {
+            if (indexes !== null) {
+                patch(route('user.taskUpdate', tasks[indexes].id))
+            }
         }
     }, [data, indexes])
-    
+    console.log(company_id)
     return (
         <>
         <tr className="py-2 text-textprimary">
@@ -187,6 +220,34 @@ export const TaskTableComponent = ({
                     }
                 </div>
             </td>
+            {(team_id !== undefined && company_id !== undefined) &&
+            <>
+            <td className="border-l border-r border-t border-sidebar-border/50 cursor-pointer w-fit text-sm">
+                <div className="flex px-4 items-center space-x-1 w-[150px] capitalize">
+                    <div className=" bg-todosecondary text-textprimary rounded-full w-[24px] h-[24px] flex items-center justify-center">
+                        <p>{item.author?.slice(0, 1)}</p>
+                    </div>
+                    <p>{item.author}</p>
+                </div>
+            </td>
+            <td className="border-l border-r border-t border-sidebar-border/50 overflow-hidden relative">
+                <div className="w-[200px] overflow-auto flex scrollbar-hide">
+                    {item.assignee?.map((menber, i) => {
+                    return (
+                        <div key={i}>
+                            <div className="text-sm flex items-center text-sidebarText justify-between px-1">
+                                <p>{menber}</p>
+                                <X onClick={() => {
+                                    
+                                }} size={16} className="ml-1 cursor-pointer"/>
+                            </div>
+                        </div>
+                    )
+                })}
+                </div>
+            </td>
+            </>
+            }
             <td className="w-fit border-l border-r border-t border-sidebar-border/50 cursor-pointer text-xs">
                 <StatusCombobox 
                     value={item.state} 

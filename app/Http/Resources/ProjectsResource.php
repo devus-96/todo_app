@@ -22,6 +22,7 @@ class ProjectsResource extends JsonResource
             "priority" => $this->priority,
             "start_date" => $this->start_date,
             "deadline" => $this->deadline,
+            "author" => $this->email
         ];
     }
 }

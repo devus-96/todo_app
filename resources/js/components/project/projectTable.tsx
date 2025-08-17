@@ -39,7 +39,6 @@ export const ProjectTable = ({
     const [updateName, setUpdateName] = useState(false)
     const { data, setData, patch, errors, reset } = useForm<Required<any>>();
     const [indexes, setIndexes] = useState<number | null>(null)
-    const menberRef = useRef<string[] | null>(null)
     const [checked, setChecked] = useState(false)
 
     function handleChange (value: string, key: string) {
@@ -124,13 +123,6 @@ export const ProjectTable = ({
         }
     }, [data, indexes, companyId, teamId])
 
-    useEffect(() => {
-        if (item.assignee) {
-            menberRef.current = JSON.parse(item.assignee)
-        }
-     }, [item])
-
-
     function time () {
         const str_startdate = new Date(item.start_date)
         const str_deadline = new Date(item.deadline)
@@ -203,7 +195,7 @@ export const ProjectTable = ({
             </td>
             <td className="border-l border-r border-t border-sidebar-border/50 overflow-hidden relative">
                 <div className="w-[200px] overflow-auto flex scrollbar-hide">
-                    {menberRef.current?.map((menber, i) => {
+                    {item.assignee?.map((menber, i) => {
                     return (
                         <div key={i}>
                             <div className="text-sm flex items-center text-sidebarText justify-between px-1">

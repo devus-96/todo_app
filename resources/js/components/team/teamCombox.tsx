@@ -20,19 +20,43 @@ import { LoaderCircle } from "lucide-react"
 interface TeamComboboxProps {
   btnClass?: string;
   className?: string;
-  value?: string;
-  onChange?: (value: string[]) => void;
-  setMenbers?: React.Dispatch<React.SetStateAction<string[]>>
+  value?: number[] | null;
+  onChange?: (value: number[]) => void;
+  setMenbers?: React.Dispatch<React.SetStateAction<{id: number; email: string;}[]>>
 }
 export const emails = [
-    'marcdeus@gmail.com',
-    "austinndjom@gmail.com",
-    "fsadfdsafdf@gmail.com",
-    "dsfdsfsdfsd@gmail.com",
-    "irorororor@gmail",
-    "sdsaooorje@gmail.com",
-    "qwjjejejrrr@gmail.com",
-    "eriowerjewoijr@gmail.com"
+    {
+        id: 1,
+        email: 'marcdeus@gmail.com',
+    },
+    {
+        id: 2,
+        email: "austinndjom@gmail.com",
+    },
+    {
+        id: 3,
+        email: "fsadfdsafdf@gmail.com",
+    },
+    {
+        id: 4,
+        email: "dsfdsfsdfsd@gmail.com",
+    },
+    {
+        id: 6,
+        email: "irorororor@gmail",
+    },
+    {
+        id: 7,
+        email: "sdsaooorje@gmail.com",
+    },
+    {
+        id: 8,
+        email: "qwjjejejrrr@gmail.com",
+    },
+    {
+        id: 8,
+        email: "eriowerjewoijr@gmail.com",
+    },
 ]
 
 export function TeamCombobox({ btnClass, className, value, onChange, setMenbers }: TeamComboboxProps) {
@@ -57,28 +81,21 @@ export function TeamCombobox({ btnClass, className, value, onChange, setMenbers 
             <CommandList>
                 <CommandEmpty></CommandEmpty>
                 <CommandGroup>
-                {emails ? emails.map((option) => (
+                {emails ? emails.map((option, index) => (
                     <CommandItem
-                        key={option}
-                        value={option}
-                        onSelect={(currentValue: string) => {
+                        key={option.id}
+                        value={option.email}
+                        onSelect={(currentValue) => {
                         if (onChange) {
-                            let newvalue = [] as string[]
                             if (value) {
-                                let arr_value = JSON.parse(value) as string[]
-                                if (!arr_value.includes(currentValue)) {
-                                    newvalue = [...arr_value, currentValue]
-                                }
-                            } else {
-                                newvalue = [currentValue]
+                                onChange([...value, emails[index].id])
                             }
-                            onChange(newvalue)
-                            if (setMenbers) setMenbers(newvalue)
+                            if (setMenbers) setMenbers((prev) => [...prev, emails[index]])
                         }
                         setOpen(false)
                         }}
                     >
-                        <p>{option}</p>
+                        <p>{option.email}</p>
                     </CommandItem>
                 )) : <LoaderCircle className="h-4 w-4 animate-spin" />}
                 </CommandGroup>

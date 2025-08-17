@@ -29,11 +29,14 @@ class ProjectController extends Controller
             // Récupère l'équipe et l'entreprise si les IDs sont fournis
             $team = null;
             $company = null;
+            $ids = [];
             if ($teamId || $id) {
                 try {
                     $team = Teams::findOrFail($teamId);
                     // On peut chercher la compagnie via la relation de l'équipe
-                    $company = Companies::findOrFail($id);;
+                    $company = Companies::findOrFail($id);
+                    //ces infos sont envoyees au client pour identifier le type de task
+                    $ids = ['teamId' => $teamId, 'projectId' => $projectId, 'companyId' => $id];
                 } catch (ModelNotFoundException $e) {
                     return response()->json(['message' => 'Team or Company not found'], 404);
                 }
@@ -45,10 +48,10 @@ class ProjectController extends Controller
 
             $tasks = $project->tasks()->get();
 
-            return Inertia('user/projectItem', [
+            return Inertia('user/projectItem', array_merge($ids, [
                 'projectItem' => $project,
                 'tasksData' => $tasks
-            ]);
+            ]));
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Project not found.'], 404);
         }
@@ -78,7 +81,8 @@ class ProjectController extends Controller
 
             // Si l'autorisation réussit, on exécute la suite
             $projects = $team->projects()
-                ->whereIn('state', ['in progress', 'paused', 'waiting', 'not started']) // J'ai corrigé "waitting"
+                ->whereIn('state', ['in progress', 'paused', 'waiting', 'not started'])
+                ->join('users', 'projects.author', 'users.id')
                 ->orderBy('start_date', 'asc')
                 ->get();
                 
@@ -121,7 +125,7 @@ class ProjectController extends Controller
             $user = Auth::user();
             $projectData = $request->validated();
             $projectData['author'] = $user->id;
-    
+
             if ($id && $teamId) {
                 // Crée un projet d'équipe
                 try {
@@ -135,6 +139,14 @@ class ProjectController extends Controller
                 Gate::authorize('create-project', [$team]);
     
                 $project = $team->projects()->create($projectData);
+
+                foreach($request->input('assignee') as $menber) {
+                    if ($menber === $request->input('isChief')) {
+                        $project->roles()->create(['role_name' => 'chief', 'user_id' => $menber]);
+                    } else {
+                        $project->roles()->create(['role_name' => 'menber', 'user_id' => $menber]);
+                    }
+                }
     
                 return redirect("/company/$id/team/$teamId/projects");
             } else {

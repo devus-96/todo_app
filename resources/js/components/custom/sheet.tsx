@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import {  AlarmClockOff, AlarmClockPlus, CalendarClock, CalendarX, CircleDashed, Flag, LoaderCircle, Target, Type } from "lucide-react";
+import {  AlarmClockOff, AlarmClockPlus, CalendarClock, CalendarX, CircleDashed, Flag, LoaderCircle, Target, Type, X } from "lucide-react";
 import { Input } from "../ui/input";
 import {
   Sheet,
@@ -12,27 +12,50 @@ import { StatusCombobox } from "./statusCombobox";
 import { TaskSheetGroup } from "./taskSheetGroup";
 import { DateCombox } from "./dateCombox";
 import { PriorityCombobox } from "./priorityCombox";
-import { FormEventHandler} from "react";
-import { ProjectType, tasks, Todo } from "@/types";
+import { FormEventHandler, useState} from "react";
+import { ProjectType, Todo } from "@/types";
 import { checkDateValues } from "@/lib/global";
 import { format } from "date-fns";
 import { useForm } from "@inertiajs/react";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Label } from "../ui/label";
+import { TeamCombobox } from "../team/teamCombox";
 
+export type tasksForm = {
+  name: string;
+  state: "not started" | "paused" | "in progress" | "done" | "canceled";
+  priority: "high" | "medium" | "low";
+  start_time: string;
+  end_time: string;
+  start_date: string;
+  deadline: string;
+  description: string;
+  type: string;
+  assignee: number[] | null;
+  isChief: number | null
+}
 
 export function SheetTask({ 
   children,
   task,
   project, 
   type = 'user_task',
-  setError
+  setError,
+  company_id,
+  team_id,
+  project_id
 }: { 
   children: React.ReactNode
   task?: Todo,
   project?: ProjectType | null,
   type?: 'user_task' | 'user_project_task' | 'team_task' | 'team_projects_task',
   setError: React.Dispatch<React.SetStateAction<string[]>>
+  company_id?: number,
+  team_id?: number,
+  project_id?: number,
 }) {
-    const { data, setData, post, patch, processing, errors, reset } = useForm<Required<tasks>>(task ? task as tasks  : {
+    const [menbers, setMenbers] = useState<{id: number; email: string;}[]>([])
+    const { data, setData, post, patch, processing, errors, reset } = useForm<Required<tasksForm>>(task ? task as tasksForm  : {
         name: "",
         state: "not started",
         priority: "medium",
@@ -42,6 +65,8 @@ export function SheetTask({
         type: 'task',
         start_date: format(new Date(), 'yyyy-MM-dd'),
         deadline: format(new Date(), 'yyyy-MM-dd'),
+        assignee: null,
+        isChief: null,
     });
 
     function handleChangeState (value: "not started" | "paused" | "in progress" | "done" | "canceled") {
@@ -58,6 +83,10 @@ export function SheetTask({
 
     function handleChangeDeadline (value: string) {
       setData('deadline', value)
+    }
+
+    function hanndeChangeMenber (value: number[]) {
+      setData('assignee', value)
     }
 
     const submit: FormEventHandler = (e) => {
@@ -196,6 +225,31 @@ export function SheetTask({
                 </select>
               </TaskSheetGroup>
               }
+
+              {(company_id && team_id) &&
+                <div className="space-y-4">
+                  {menbers.length !== 0 &&
+                    <div className="w-full">
+                      <p className="text-textprimary3 mb-4">choose who is the project manager by clicking on the switches</p>
+                      <RadioGroup defaultValue="comfortable" className="flex items-center gap-4 flex-wrap">
+                        {menbers.map((item, index) => (
+                          <div key={index} className="flex items-center gap-3 bg-todoterciary/30 text-textprimary p-1 ">
+                            <RadioGroupItem onClick={() => setData('isChief', item.id)} value={item.email} id={`r${index}`} />
+                            <Label htmlFor="r1">{item.email}</Label>
+                            <X size={14} />
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                    }
+                    <TeamCombobox 
+                      setMenbers={setMenbers} 
+                      onChange={hanndeChangeMenber} 
+                      value={data.assignee}
+                      btnClass="text-textprimary3 hover:text-textprimary2 cursor-pointer"
+                    />
+                  </div>
+               }
 
               <div className="grid w-full gap-3 px-4 mt-4">
                 <textarea 

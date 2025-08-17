@@ -1,5 +1,5 @@
 import { SheetTask } from "../custom/sheet"
-import { DoorOpen, MessageCircleDashed,Trash2, CornerUpRight, WrapText, LucideProps } from "lucide-react";
+import { LucideProps } from "lucide-react";
 import { Button } from "../ui/button";
 import { SheetComment } from "../popup/sheetComment";
 import { ProjectType, Todo } from "@/types";
@@ -7,7 +7,7 @@ import { router } from '@inertiajs/react';
 import { ProjectCombobox } from "../custom/projectCombobox";
 
 export function SheetAction ({
-    type,
+    type='',
     tasks,
     projects,
     selected,
@@ -16,7 +16,7 @@ export function SheetAction ({
     setProjects,
     dropAction
 }:{
-    type: string
+    type?: string
     tasks?: Todo[],
     projects?:ProjectType[]
     selected: number[],

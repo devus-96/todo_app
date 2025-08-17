@@ -21,7 +21,8 @@ Route::prefix('/user')->middleware(['auth', 'verified'])->name('user.')->group(f
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::post('/tasks', [TaskController::class, 'store'])->name('newtask');
     Route::delete('/task/{id}', [TaskController::class, 'destroy'])->name('taskDelete');
-    Route::patch('/task/{id}', [TaskController::class, 'update'])->name('taskUpdate');
+    Route::patch('/task/{taskId}', [TaskController::class, 'update'])->name('taskUpdate');
+    Route::patch('/project/{projectId}/tasks/{taskId}')->name('update_project_task');
     //comments 
     Route::post('/comment', [CommentController::class, 'store']);
     Route::get('/comment', [CommentController::class, 'index']);
@@ -56,8 +57,8 @@ Route::prefix('/company')->middleware(['auth', 'verified'])->name('company.')->g
     Route::get('/{id}/team/{teamId}/task', [TaskController::class, 'index']);
     Route::post('/{id}/team/{teamId}/task',  [TaskController::class, 'store']);
     Route::post('/{id}/team/{teamId}/project/{projectId}/task',  [TaskController::class, 'store']);
-    Route::patch('/{id}/team/{teamId}/tasks/{taskId}', [TaskController::class, 'update']);
-    Route::patch('/{id}/team/{teamId}/project/{projectId}/tasks/{taskId}',  [TaskController::class, 'update']);
+    Route::patch('/{id}/team/{teamId}/tasks/{taskId}', [TaskController::class, 'update'])->name('update_task_team');
+    Route::patch('/{id}/team/{teamId}/project/{projectId}/tasks/{taskId}',  [TaskController::class, 'update'])->name('update_task_project_team');
     Route::delete('/{id}/team/{teamId}/tasks/{taskId}', [TaskController::class, 'delete']);
 });
 ?>

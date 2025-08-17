@@ -1,5 +1,4 @@
 import { ProjectComponent } from "@/components/common/projectComponent";
-import { fakeProjects } from "@/constant/global";
 import TeamLayout from "@/layouts/team-layout";
 import { BreadcrumbItem, ProjectType } from "@/types";
 import { Head } from "@inertiajs/react";
@@ -31,7 +30,12 @@ const dropMenuTab = [
         title: 'State',
         values: ["not started",'in progress',"waitting", "paused"]
     },
-    ]
+    {
+        title: 'Author',
+        values: ["not started",'in progress',"waitting", "paused"]
+    },
+
+]
 
 export default function ProjectsTeam ({
     project, 

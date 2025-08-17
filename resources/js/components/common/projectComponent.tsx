@@ -1,5 +1,5 @@
 import { Plus, Target } from "lucide-react";
-import {projectsRow, teamstasksRow} from "@/constant/task"
+import {projectsRow, teamsProjectRow} from "@/constant/task"
 import { useState } from "react";
 import { sortTask, viewAvailableInProjectView } from "@/constant/global";
 import { Commontable } from "@/components/custom/commontable";
@@ -79,7 +79,7 @@ export function ProjectComponent ({
                 <section className="w-full h-full overflow-auto scrollbar-hide">
                     {views === 'tasks' &&
                     <>
-                    <Commontable tabHeader={(company_id && team_id) ? teamstasksRow : projectsRow}>
+                    <Commontable tabHeader={(company_id && team_id) ? teamsProjectRow : projectsRow}>
                         {projects.map((item: any, index: number) => {
                             console.log(team_id, company_id)
                             return (

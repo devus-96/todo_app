@@ -32,6 +32,25 @@ export const viewAvailableInProjectView =  [
   }
 ]
 
+export const viewAvailableInTasksView =  [
+  {
+      name: 'All Tasks',
+      value: 'tasks'
+  },
+  {
+      name: 'Board',
+      value: 'board'
+  },
+  {
+    name: 'Week',
+    value: 'week'
+  },
+  {
+     name: 'Calendar',
+     value: 'calendar'
+  }
+]
+
 export const sortTask = {assign: '', author: '', priority: '',  state: '', "at start date": '', 'at deadline': ''}
 
 export const dropType = [

@@ -57,7 +57,7 @@ export interface Todo {
     priority: "high" | "medium" | "low";
     description: string;
     type?: "task" | "habit";
-    assignee?: string[];
+    assignee?: string[] | null; // cet attribut vient de la table de liaison role
     start_time?: string;
     end_time?: string;
     start_date: string;
@@ -93,7 +93,7 @@ export interface Todo {
     deadline: string;
     start_at: string | null; 
     finish_at: string | null; 
-    assignee?: string | null; 
+    assignee?: string[] | null; 
     author: string;
     created_at: string;
     updated_at: string;

@@ -57,6 +57,8 @@ class TaskController extends Controller
 
     public function index ($id = null, $teamId = null) {
         $user = Auth::user();
+        $route = '';
+        $ids = [];
 
         if ($id && $teamId) {
           try {
@@ -77,7 +79,8 @@ class TaskController extends Controller
                    ->where('taskable_type', null)
                    ->orderBy('start_date', 'asc')
                    ->get();
-
+          $route = 'team/tasks'; 
+          $ids = ['teamId' => $teamId, 'companyId' => $id];
         } else {
           $task = Tasks::where('author', (int)$user->id)
                    ->whereIn('state', ['in progress', 'paused', 'waitting', 'not started'])
@@ -85,36 +88,39 @@ class TaskController extends Controller
                    ->where('taskable_type', null)
                    ->orderBy('start_date', 'asc')
                    ->get();
+          $route = 'user/tasks'; 
         }
 
         $taskCollection = TasksResource::collection($task);
 
-        return Inertia('user/tasks', [
-            'tasks' => $taskCollection,
-        ]);
+        return Inertia($route, array_merge($ids, [
+          'taskdata' => $taskCollection,
+        ]));
     }
 
     public function store (PostTaskRequest $request, $id=null, $teamId=null, $projectId=null) {
-
+      //on recupere les infos depuis le client 
       $taskData = $request->validated();
-
+      //puis l'utilisateur actif
       $user = Auth::user();
-
+      //CAS 1: on essaye de cree des tasks reliees a un projet utilsateur 
       if ($projectId && !$teamId) {
         try {
           $project = Projects::findOrFail($projectId);
         } catch (ModelNotFoundException $e) {
           return response()->json(['message' => 'project not found.'], 404);
         }
-
+        //pour se faire on verifier que l'utilisateur est le proprietaire de projet
         if ($project->author !== $user->id) {
+          //si non on il n'a pas les droits
           return response()->json(['message' => 'It seems you do not have the rights to perform this action.'], 403);
         }
-
-        $project->tasks()->create([
+        // si oui on poste la tasks
+        $task = $project->tasks()->create([
             ...$taskData,
             'author' => $user->id,
         ]);
+      //CAS 2: on essaye de creer une task dans un projet relier a une team
       } else if ($projectId && $teamId) {
         try {
           $team = Teams::findOrFail($teamId);
@@ -122,19 +128,21 @@ class TaskController extends Controller
         } catch (ModelNotFoundException $e) {
           return response()->json(['message' => 'Bad request.'], 403);
         }
-
+        //on verifie que le use a bien les droits (il doit etre soit chef du projet soit administrateur de la team)
         Gate::authorize('create-tasks-project', [$project, $team]);
-
+        //si oui on cree la task
         $project->tasks()->create([
           ...$taskData,
           'author' => $user->id,
         ]);
+      //CAS 3: On essaye de cree une task mais relie directement a une teams
       } else if ($teamId && !$projectId) {
         try {
-          $team = Teams::findOrFail($request->input('team_id'));
+          $team = Teams::findOrFail($teamId);
         } catch (ModelNotFoundException $e) {
           return response()->json(['message' => 'task not found.'], 404);
         }
+        //alors on doit etre un administrateur de la team
         $role_team = $team->roles()->where('user_id', $user->id)->first();
         if ($role_team !== 'administrator') {
           return response()->json(['message' => 'It seems you do not have the rights to perform this action.'], 403);
@@ -144,30 +152,70 @@ class TaskController extends Controller
           'author' => $user->id,
         ]);
       } else {
+        //CAS 4: on essaye de creer une task mais relier a un utilisateur, alors on le cree simplement avec comme auteur l'utilisateur 
           Tasks::create([
             ...$taskData,
             'author' => $user->id,
           ]);
       }
-
-      return redirect('/user/tasks');
+      // si il existe un champ assignee dans les inpts alors cree les roles correspondants
+      if ($request->input('assignee')) {
+          foreach($request->input('assignee') as $menber) {
+            if ($menber === $request->input('isChief')) {
+                $project->roles()->create(['role_name' => 'chief', 'user_id' => $menber]);
+            } else {
+                $project->roles()->create(['role_name' => 'menber', 'user_id' => $menber]);
+            }
+          }
+      }
     }
 
-    public function update (UpdateTaskRequest $request, $id, $teamId, $projectId, $taskId) {
+    public function update (UpdateTaskRequest $request, $id=null, $teamId=null, $projectId=null, $taskId) {
+      $user = Auth::user();
+      //on recupere les infos les donnees depuis le formulaire et on les valides
       $taskData = $request->validated();
-
       try {
-        $task = Tasks::findOrFail($id);
+        $task = Tasks::findOrFail($taskId);
       } catch (ModelNotFoundException $e) {
         return response()->json(['message' => 'task not found.'], 404);
       }
 
-      $user = Auth::user();
-
-      if ($task->author !== $user->id) {
-        return response()->json(['message' => "You do not have permission to delete this task"], 403);
+      if ($teamId && !$projectId) {
+        try {
+          $team = Teams::findOrFail($teamId);
+        } catch (ModelNotFoundException $e) {
+          return response()->json(['message' => 'task not found.'], 404);
+        }
+         //alors on doit etre un administrateur de la team
+         $role_team = $team->roles()->where('user_id', $user->id)->first();
+         if ($role_team !== 'administrator') {
+           return response()->json(['message' => 'It seems you do not have the rights to perform this action.'], 403);
+         }
+      } else if (!$teamId && $projectId) {
+        try {
+          $project = Projects::findOrFail($projectId);
+        } catch (ModelNotFoundException $e) {
+          return response()->json(['message' => 'project not found.'], 404);
+        }
+        //pour se faire on verifier que l'utilisateur est le proprietaire de projet
+        if ($project->author !== $user->id) {
+          //si non on il n'a pas les droits
+          return response()->json(['message' => 'It seems you do not have the rights to perform this action.'], 403);
+        }
+      } else if ($teamId && $projectId) {
+        try {
+          $team = Teams::findOrFail($teamId);
+          $project = Projects::findOrFail($projectId);
+        } catch (ModelNotFoundException $e) {
+          return response()->json(['message' => 'Bad request.'], 403);
+        }
+        //on verifie que le use a bien les droits (il doit etre soit chef du projet soit administrateur de la team)
+        Gate::authorize('create-tasks-project', [$project, $team]);
+      } else {
+        if ($task->author !== $user->id) {
+          return response()->json(['message' => "You do not have permission to delete this task"], 403);
+        }
       }
-
       $task->update($taskData);
 
       return response()->json(['message' => 'Task successfully updated.'], 200);

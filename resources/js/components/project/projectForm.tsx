@@ -21,8 +21,8 @@ type ProjectForm = {
     objectif: string[] | string;
     start_date: string;
     deadline: string;
-    assignee: string;
-    isChief: string
+    assignee: number[] | null;
+    isChief: number | null
 };
 
 export const ProjectFrom = ({
@@ -36,7 +36,7 @@ export const ProjectFrom = ({
 }) => {
      const [showDescription, setShowDescription] = useState<boolean>(false)
      const [number, setNumber] = useState(1)
-     const [menbers, setMenbers] = useState<string[]>([])
+     const [menbers, setMenbers] = useState<{id: number; email: string;}[]>([])
      const numberRef = useRef(1)
      const objectifRef = useRef<{[key: number]: string}>({})
      const { auth } = usePage<SharedData>().props;
@@ -49,8 +49,8 @@ export const ProjectFrom = ({
             start_date: new Date().toLocaleDateString(),
             deadline: new Date().toLocaleDateString(),
             objectif: '',
-            assignee: '',
-            isChief: '',
+            assignee: null,
+            isChief: null,
          });
     
     function handleChangeState (value: "not started" | "paused" | "in progress" | "done" | "canceled") {
@@ -69,8 +69,8 @@ export const ProjectFrom = ({
       setData('deadline', value)
     }
 
-    function hanndeChangeMenber (value: string[]) {
-      setData('assignee', JSON.stringify(value))
+    function hanndeChangeMenber (value: number[]) {
+      setData('assignee', value)
     }
 
     function handeChangeObjectif (value: string) {
@@ -113,7 +113,9 @@ export const ProjectFrom = ({
               className="w-full border-none !outline-none focus-visible:bg-todoprimary focus-visible:ring-[0px] placeholder:text-textprimary !text-3xl bg-transparent text-textprimary"
               placeholder="Give a name to your project"
             />
+
             <p className="text-textprimary3 text-sm">author: @{auth.user.email}</p>
+            
             <div className="cursor-pointer" onClick={() => {setShowDescription(true)}}>
               <div className="flex items-center text-textprimary3 space-x-2 text-holder p-1 duration-300 hover:bg-todosecondary hover:text-textprimary">
                   <MessageSquareText size={24} />
@@ -175,29 +177,31 @@ export const ProjectFrom = ({
                   </div>
               </div>
 
+              {(company_id && team_id) &&
               <div className="space-y-4">
                 {menbers.length !== 0 &&
-                <div className="w-full">
-                  <p className="text-textprimary3 mb-4">choose who is the project manager by clicking on the switches</p>
-                  <RadioGroup defaultValue="comfortable" className="flex items-center gap-4 flex-wrap">
-                    {menbers.map((item, index) => (
-                      <div key={index} className="flex items-center gap-3 bg-todoterciary/30 text-textprimary p-1 ">
-                        <RadioGroupItem value={item} id={`r${index}`} />
-                        <Label htmlFor="r1">{item}</Label>
-                        <X size={14} />
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <div className="w-full">
+                    <p className="text-textprimary3 mb-4">choose who is the project manager by clicking on the switches</p>
+                    <RadioGroup defaultValue="comfortable" className="flex items-center gap-4 flex-wrap">
+                      {menbers.map((item, index) => (
+                        <div key={index} className="flex items-center gap-3 bg-todoterciary/30 text-textprimary p-1 ">
+                          <RadioGroupItem onClick={() => setData('isChief', item.id)} value={item.email} id={`r${index}`} />
+                          <Label htmlFor="r1">{item.email}</Label>
+                          <X size={14} />
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                  }
+                  <TeamCombobox 
+                    setMenbers={setMenbers} 
+                    onChange={hanndeChangeMenber} 
+                    value={data.assignee}
+                    btnClass="text-textprimary3 hover:text-textprimary2 cursor-pointer"
+                  />
                 </div>
-                }
-                <TeamCombobox 
-                  setMenbers={setMenbers} 
-                  onChange={hanndeChangeMenber} 
-                  value={data.assignee}
-                  btnClass="text-textprimary3 hover:text-textprimary2 cursor-pointer"
-                />
-              </div>
-
+              }
+              
               <div className="" >
                   <div onClick={() => {
                     setNumber((prev) => prev+1)

@@ -31,7 +31,7 @@ export const userstasksRow = [
   }
   ]
 
-  export const teamstasksRow = [
+  export const teamsProjectRow = [
     {
       name: 'Name',
       icon: CheckCheck
@@ -63,6 +63,37 @@ export const userstasksRow = [
   {
     name: 'completion',
     icon: CalendarArrowUp
+  }
+  ]
+
+  export const teamsTaskRow = [
+    {
+      name: 'Name',
+      icon: CheckCheck
+  },
+  {
+    name: 'Author',
+    icon: User
+  },
+  {
+    name: 'Assigned',
+    icon: Users
+  },
+  {
+      name: 'status',
+      icon: CircleDashed
+  },
+  {
+      name: 'priority',
+      icon: Flag
+  },
+  {
+      name: 'start date',
+      icon: CalendarX
+  },
+  {
+      name: 'deadline',
+      icon: CalendarClock
   }
   ]
 
